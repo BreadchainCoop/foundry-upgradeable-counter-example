@@ -8,6 +8,7 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 contract Counter is Initializable {
     /// @custom:storage-location erc7201:counter.storage
     struct CounterStorage {
+        address owner; // UNSAFE: inserted before existing field
         uint256 number;
     }
 
