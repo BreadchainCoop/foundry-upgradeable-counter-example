@@ -9,6 +9,7 @@ contract Counter is Initializable {
     /// @custom:storage-location erc7201:counter.storage
     struct CounterStorage {
         uint256 number;
+        uint256 lastUpdated;
     }
 
     // keccak256(abi.encode(uint256(keccak256("counter.storage")) - 1)) & ~bytes32(uint256(0xff))
@@ -34,11 +35,19 @@ contract Counter is Initializable {
         return _getCounterStorage().number;
     }
 
+    function lastUpdated() public view returns (uint256) {
+        return _getCounterStorage().lastUpdated;
+    }
+
     function setNumber(uint256 newNumber) public {
-        _getCounterStorage().number = newNumber;
+        CounterStorage storage $ = _getCounterStorage();
+        $.number = newNumber;
+        $.lastUpdated = block.timestamp;
     }
 
     function increment() public {
-        _getCounterStorage().number++;
+        CounterStorage storage $ = _getCounterStorage();
+        $.number++;
+        $.lastUpdated = block.timestamp;
     }
 }
