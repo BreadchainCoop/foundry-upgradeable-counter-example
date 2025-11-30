@@ -7,6 +7,7 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 /// @notice Simple upgradeable counter using traditional storage layout (non-ERC7201)
 /// @dev Uses slot 0 for storage - NOT recommended for production upgradeable contracts
 contract CounterBasic is Initializable {
+    address public owner; // UNSAFE: inserted before existing field
     uint256 public number;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
