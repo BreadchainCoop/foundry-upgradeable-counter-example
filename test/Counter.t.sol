@@ -11,7 +11,7 @@ contract CounterTest is Test {
 
     function setUp() public {
         ProxyAdmin admin = new ProxyAdmin(address(this));
-        Counter implementation = new Counter(1);
+        Counter implementation = new Counter();
         bytes memory initData = abi.encodeCall(Counter.initialize, (0));
         TransparentUpgradeableProxy proxy =
             new TransparentUpgradeableProxy(address(implementation), address(admin), initData);

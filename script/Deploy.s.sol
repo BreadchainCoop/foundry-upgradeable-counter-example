@@ -21,20 +21,20 @@ contract Deploy is Script {
         ProxyAdmin admin = new ProxyAdmin(msg.sender);
         console2.log("ProxyAdmin", address(admin));
 
-        // Deploy implementation with version number (tests constructor arg verification)
-        Counter implementation = new Counter(1);
-        console2.log("Counter_Implementation", address(implementation));
+        // Deploy implementation
+        Counter implementation = new Counter();
+        console2.log("Counter", address(implementation));
 
         // Deploy TransparentUpgradeableProxy with initializer call
         uint256 initialNumber = 42;
         bytes memory initData = abi.encodeCall(Counter.initialize, (initialNumber));
         TransparentUpgradeableProxy proxy =
             new TransparentUpgradeableProxy(address(implementation), address(admin), initData);
-        console2.log("Counter_Proxy", address(proxy));
+        console2.log("TransparentUpgradeableProxy", address(proxy));
 
         // Verify initializer was called correctly
         Counter proxiedCounter = Counter(address(proxy));
-        console2.log("Counter_Proxy.number()", proxiedCounter.number());
+        console2.log("Counter.number()", proxiedCounter.number());
         require(proxiedCounter.number() == initialNumber, "Initializer did not set number correctly");
 
         vm.stopBroadcast();
