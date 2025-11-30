@@ -5,6 +5,7 @@ import {Test} from "forge-std/Test.sol";
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import {Counter} from "../src/Counter.sol";
+import {CounterBasic} from "../src/CounterBasic.sol";
 
 contract CounterTest is Test {
     Counter public counter;
@@ -16,6 +17,29 @@ contract CounterTest is Test {
         TransparentUpgradeableProxy proxy =
             new TransparentUpgradeableProxy(address(implementation), address(admin), initData);
         counter = Counter(address(proxy));
+    }
+
+    function test_Increment() public {
+        counter.increment();
+        assertEq(counter.number(), 1);
+    }
+
+    function testFuzz_SetNumber(uint256 x) public {
+        counter.setNumber(x);
+        assertEq(counter.number(), x);
+    }
+}
+
+contract CounterBasicTest is Test {
+    CounterBasic public counter;
+
+    function setUp() public {
+        ProxyAdmin admin = new ProxyAdmin(address(this));
+        CounterBasic implementation = new CounterBasic();
+        bytes memory initData = abi.encodeCall(CounterBasic.initialize, (0));
+        TransparentUpgradeableProxy proxy =
+            new TransparentUpgradeableProxy(address(implementation), address(admin), initData);
+        counter = CounterBasic(address(proxy));
     }
 
     function test_Increment() public {
