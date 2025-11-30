@@ -1,0 +1,11 @@
+name: Upgrade Safety
+
+on:
+  push:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  upgrade-safety:
+    uses: BreadchainCoop/etherform/.github/workflows/_upgrade-safety.yml@main
