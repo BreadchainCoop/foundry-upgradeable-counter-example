@@ -6,8 +6,12 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 /// @title CounterBasic
 /// @notice Simple upgradeable counter using traditional storage layout (non-ERC7201)
 /// @dev Uses slot 0 for storage - NOT recommended for production upgradeable contracts
+/// @dev VIOLATION: Removed 'lastUpdated' state variable
 contract CounterBasic is Initializable {
+    // VIOLATION: Removed 'lastUpdated' variable that existed in baseline
+    // This causes storage misalignment for any variables that were after it
     uint256 public number;
+    // uint256 public lastUpdated; // REMOVED - causes storage shift
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
