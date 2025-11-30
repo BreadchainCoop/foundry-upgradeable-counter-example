@@ -6,7 +6,11 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 /// @title CounterBasic
 /// @notice Simple upgradeable counter using traditional storage layout (non-ERC7201)
 /// @dev Uses slot 0 for storage - NOT recommended for production upgradeable contracts
+/// @dev VIOLATION: Inserted new variable before existing 'number'
 contract CounterBasic is Initializable {
+    // VIOLATION: New variable inserted BEFORE existing 'number'
+    // This shifts 'number' from slot 0 to slot 1
+    address public owner;
     uint256 public number;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -15,6 +19,7 @@ contract CounterBasic is Initializable {
     }
 
     function initialize(uint256 initialNumber) public initializer {
+        owner = msg.sender;
         number = initialNumber;
     }
 
