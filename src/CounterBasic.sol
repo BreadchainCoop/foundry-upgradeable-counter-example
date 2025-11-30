@@ -5,7 +5,7 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 
 /// @title CounterBasic
 /// @notice Simple upgradeable counter using traditional storage layout (non-ERC7201)
-/// @dev Uses slot 0 for storage - NOT recommended for production upgradeable contracts
+/// @dev VIOLATION: Function signature changed
 contract CounterBasic is Initializable {
     uint256 public number;
 
@@ -18,7 +18,12 @@ contract CounterBasic is Initializable {
         number = initialNumber;
     }
 
-    function setNumber(uint256 newNumber) public {
+    // VIOLATION: Function signature changed
+    // Original: function setNumber(uint256 newNumber)
+    // New:      function setNumber(uint256 newNumber, address caller)
+    // External callers using old ABI will break
+    function setNumber(uint256 newNumber, address caller) public {
+        require(caller != address(0), "Invalid caller");
         number = newNumber;
     }
 
