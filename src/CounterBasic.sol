@@ -6,19 +6,21 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 /// @title CounterBasic
 /// @notice Simple upgradeable counter using traditional storage layout (non-ERC7201)
 /// @dev Uses slot 0 for storage - NOT recommended for production upgradeable contracts
+/// @dev VIOLATION: Changed variable type from uint256 to uint128
 contract CounterBasic is Initializable {
-    uint256 public number;
+    // VIOLATION: Changed from uint256 to uint128
+    uint128 public number;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }
 
-    function initialize(uint256 initialNumber) public initializer {
+    function initialize(uint128 initialNumber) public initializer {
         number = initialNumber;
     }
 
-    function setNumber(uint256 newNumber) public {
+    function setNumber(uint128 newNumber) public {
         number = newNumber;
     }
 
