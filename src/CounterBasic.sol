@@ -5,13 +5,15 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 
 /// @title CounterBasic
 /// @notice Simple upgradeable counter using traditional storage layout (non-ERC7201)
-/// @dev Uses slot 0 for storage - NOT recommended for production upgradeable contracts
+/// @dev VIOLATION: Missing _disableInitializers() in constructor
 contract CounterBasic is Initializable {
     uint256 public number;
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
+    // VIOLATION: Constructor without _disableInitializers()
+    // Implementation contract can be taken over by attacker
+    // who calls initialize() directly on the implementation
     constructor() {
-        _disableInitializers();
+        // Missing: _disableInitializers();
     }
 
     function initialize(uint256 initialNumber) public initializer {
