@@ -24,6 +24,9 @@ jobs:
       # Deploy mainnet when merged to main (disabled for now)
       deploy-on-main: false
       
+      # Initialize baseline on merge even without mainnet deploy
+      init-baseline-without-deploy: true
+      
     secrets:
       PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
       RPC_URL: ${{ secrets.RPC_URL }}
