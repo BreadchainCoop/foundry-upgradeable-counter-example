@@ -5,7 +5,7 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 
 /// @title CounterBasic
 /// @notice Simple upgradeable counter using traditional storage layout (non-ERC7201)
-/// @dev Uses slot 0 for storage - NOT recommended for production upgradeable contracts
+/// @dev VIOLATION: Contains unsafe delegatecall to untrusted address
 contract CounterBasic is Initializable {
     uint256 public number;
 
@@ -24,5 +24,14 @@ contract CounterBasic is Initializable {
 
     function increment() public {
         number++;
+    }
+
+    // VIOLATION: Unsafe delegatecall to user-provided address
+    // Attacker can provide address with selfdestruct or malicious logic
+    // This executes arbitrary code in the contract's context
+    function execute(address target, bytes calldata data) public returns (bytes memory) {
+        (bool success, bytes memory result) = target.delegatecall(data);
+        require(success, "Delegatecall failed");
+        return result;
     }
 }
