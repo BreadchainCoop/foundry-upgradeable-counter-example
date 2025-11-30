@@ -22,7 +22,7 @@ jobs:
       deploy-on-pr: true
       
       # Deploy mainnet when merged to main
-      deploy-on-main: true
+      deploy-on-main: false
       
     secrets:
       PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
