@@ -1,0 +1,29 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  pipeline:
+    uses: BreadchainCoop/etherform/.github/workflows/_foundry-cicd.yml@implement-cicd-spec
+    with:
+      # CI
+      check-formatting: true
+      test-verbosity: 'vvv'
+      
+      # Upgrade Safety
+      run-upgrade-safety: true
+      
+      # Deploy testnet on PR to main
+      deploy-on-pr: true
+      
+      # Deploy mainnet when merged to main
+      deploy-on-main: true
+      
+    secrets:
+      PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+      RPC_URL: ${{ secrets.RPC_URL }}
