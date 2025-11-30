@@ -6,6 +6,7 @@ import {console2} from "forge-std/console2.sol";
 import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {Counter} from "../src/Counter.sol";
+import {CounterBasic} from "../src/CounterBasic.sol";
 
 /// @title Deploy
 /// @notice Canonical deployment script for CI/CD pipelines
@@ -17,25 +18,37 @@ contract Deploy is Script {
 
         vm.startBroadcast(pk);
 
-        // Deploy ProxyAdmin
+        uint256 initialNumber = 42;
+
+        // Deploy shared ProxyAdmin
         ProxyAdmin admin = new ProxyAdmin(msg.sender);
         console2.log("ProxyAdmin", address(admin));
 
-        // Deploy implementation
-        Counter implementation = new Counter();
-        console2.log("Counter", address(implementation));
+        // Deploy Counter (ERC-7201 namespaced storage)
+        Counter counterImplementation = new Counter();
+        console2.log("Counter Implementation", address(counterImplementation));
 
-        // Deploy TransparentUpgradeableProxy with initializer call
-        uint256 initialNumber = 42;
-        bytes memory initData = abi.encodeCall(Counter.initialize, (initialNumber));
-        TransparentUpgradeableProxy proxy =
-            new TransparentUpgradeableProxy(address(implementation), address(admin), initData);
-        console2.log("TransparentUpgradeableProxy", address(proxy));
+        bytes memory counterInitData = abi.encodeCall(Counter.initialize, (initialNumber));
+        TransparentUpgradeableProxy counterProxy =
+            new TransparentUpgradeableProxy(address(counterImplementation), address(admin), counterInitData);
+        console2.log("Counter Proxy", address(counterProxy));
 
-        // Verify initializer was called correctly
-        Counter proxiedCounter = Counter(address(proxy));
+        Counter proxiedCounter = Counter(address(counterProxy));
         console2.log("Counter.number()", proxiedCounter.number());
-        require(proxiedCounter.number() == initialNumber, "Initializer did not set number correctly");
+        require(proxiedCounter.number() == initialNumber, "Counter initializer did not set number correctly");
+
+        // Deploy CounterBasic (traditional storage layout)
+        CounterBasic counterBasicImplementation = new CounterBasic();
+        console2.log("CounterBasic Implementation", address(counterBasicImplementation));
+
+        bytes memory counterBasicInitData = abi.encodeCall(CounterBasic.initialize, (initialNumber));
+        TransparentUpgradeableProxy counterBasicProxy =
+            new TransparentUpgradeableProxy(address(counterBasicImplementation), address(admin), counterBasicInitData);
+        console2.log("CounterBasic Proxy", address(counterBasicProxy));
+
+        CounterBasic proxiedCounterBasic = CounterBasic(address(counterBasicProxy));
+        console2.log("CounterBasic.number()", proxiedCounterBasic.number());
+        require(proxiedCounterBasic.number() == initialNumber, "CounterBasic initializer did not set number correctly");
 
         vm.stopBroadcast();
     }
