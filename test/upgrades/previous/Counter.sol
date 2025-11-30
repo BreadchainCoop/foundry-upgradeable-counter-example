@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.13 ^0.8.20;
 
-// lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/proxy/utils/Initializable.sol
+// lib/openzeppelin-contracts/contracts/proxy/utils/Initializable.sol
 
 // OpenZeppelin Contracts (last updated v5.3.0) (proxy/utils/Initializable.sol)
 
@@ -246,8 +246,13 @@ abstract contract Initializable {
 contract Counter is Initializable {
     uint256 public number;
 
+    /// @notice Version number set at deployment time (immutable, stored in bytecode)
+    /// @dev Used to test constructor arg verification
+    uint256 public immutable VERSION;
+
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
+    constructor(uint256 version) {
+        VERSION = version;
         _disableInitializers();
     }
 
