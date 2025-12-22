@@ -36,11 +36,44 @@ jobs:
       working-directory: .
     secrets: inherit
 
+  baseline-exists:
+    runs-on: ubuntu-latest
+    needs: [detect-changes]
+    if: needs.detect-changes.outputs.should-run == 'true'
+    outputs:
+      exists: ${{ steps.check.outputs.exists }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        run: |
+          if ls test/upgrades/baseline/*.sol 1>/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+
+  init-baseline-pr:
+    needs: [detect-changes, ci, baseline-exists]
+    if: |
+      always() &&
+      needs.detect-changes.outputs.should-run == 'true' &&
+      needs.ci.result == 'success' &&
+      needs.baseline-exists.outputs.exists == 'false' &&
+      github.event_name == 'pull_request'
+    uses: BreadchainCoop/etherform/.github/workflows/_foundry-post-mainnet.yml@implement-cicd-spec
+    with:
+      flatten-contracts: true
+      create-release: false
+      upgrades-path: test/upgrades
+      working-directory: .
+    secrets: inherit
+
   upgrade-safety:
-    needs: [detect-changes, ci]
+    needs: [detect-changes, ci, baseline-exists, init-baseline-pr]
     if: |
       needs.detect-changes.outputs.should-run == 'true' &&
-      true
+      (needs.baseline-exists.outputs.exists == 'true' || needs.init-baseline-pr.result == 'success')
     uses: BreadchainCoop/etherform/.github/workflows/_foundry-upgrade-safety.yml@implement-cicd-spec
     with:
       baseline-path: test/upgrades/baseline
@@ -55,7 +88,6 @@ jobs:
       needs.detect-changes.outputs.should-run == 'true' &&
       needs.ci.result == 'success' &&
       (needs.upgrade-safety.result == 'success' || needs.upgrade-safety.result == 'skipped') &&
-      true &&
       github.event_name == 'pull_request'
     uses: BreadchainCoop/etherform/.github/workflows/_foundry-deploy.yml@implement-cicd-spec
     with:
