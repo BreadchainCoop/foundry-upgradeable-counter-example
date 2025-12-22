@@ -7,15 +7,103 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
-  pipeline:
-    uses: BreadchainCoop/etherform/.github/workflows/_foundry-cicd.yml@implement-cicd-spec
+  detect-changes:
+    uses: BreadchainCoop/etherform/.github/workflows/_foundry-detect-changes.yml@implement-cicd-spec
+    with:
+      skip-if-no-changes: true
+      contract-paths: |
+        src/**
+        script/**
+        test/**
+        lib/**
+        foundry.toml
+        remappings.txt
+      working-directory: .
+    secrets: inherit
+
+  ci:
+    needs: [detect-changes]
+    if: needs.detect-changes.outputs.should-run == 'true'
+    uses: BreadchainCoop/etherform/.github/workflows/_foundry-ci.yml@implement-cicd-spec
     with:
       check-formatting: true
-      test-verbosity: 'vvv'
-      run-upgrade-safety: true
-      deploy-on-pr: true
-      deploy-on-main: false
-      init-baseline-without-deploy: true
-      create-release: true
+      test-verbosity: vvv
+      working-directory: .
+    secrets: inherit
+
+  upgrade-safety:
+    needs: [detect-changes, ci]
+    if: needs.detect-changes.outputs.should-run == 'true'
+    uses: BreadchainCoop/etherform/.github/workflows/_foundry-upgrade-safety.yml@implement-cicd-spec
+    with:
+      baseline-path: test/upgrades/baseline
+      upgrades-path: test/upgrades
+      working-directory: .
+    secrets: inherit
+
+  deploy-testnet:
+    needs: [detect-changes, ci, upgrade-safety]
+    if: |
+      always() &&
+      needs.detect-changes.outputs.should-run == 'true' &&
+      needs.ci.result == 'success' &&
+      (needs.upgrade-safety.result == 'success' || needs.upgrade-safety.result == 'skipped') &&
+      github.event_name == 'pull_request'
+    uses: BreadchainCoop/etherform/.github/workflows/_foundry-deploy.yml@implement-cicd-spec
+    with:
+      network-type: testnet
+      deploy-script: script/Deploy.s.sol:Deploy
+      blockscout-url: https://eth-sepolia.blockscout.com
+      network-name: Sepolia
+      indexing-wait: 60
+      pr-number: ${{ github.event.pull_request.number }}
+      commit-sha: ${{ github.event.pull_request.head.sha }}
+      working-directory: .
+    secrets: inherit
+
+  deploy-mainnet:
+    needs: [detect-changes, ci, upgrade-safety]
+    if: |
+      always() &&
+      needs.detect-changes.outputs.should-run == 'true' &&
+      needs.ci.result == 'success' &&
+      (needs.upgrade-safety.result == 'success' || needs.upgrade-safety.result == 'skipped') &&
+      false &&
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main'
+    uses: BreadchainCoop/etherform/.github/workflows/_foundry-deploy.yml@implement-cicd-spec
+    with:
+      network-type: mainnet
+      deploy-script: script/Deploy.s.sol:Deploy
+      blockscout-url: https://eth-sepolia.blockscout.com
+      network-name: Sepolia
+      indexing-wait: 60
+      working-directory: .
+    secrets: inherit
+
+  post-mainnet:
+    needs: [detect-changes, ci, upgrade-safety, deploy-mainnet]
+    if: |
+      always() &&
+      needs.detect-changes.outputs.should-run == 'true' &&
+      needs.ci.result == 'success' &&
+      (needs.upgrade-safety.result == 'success' || needs.upgrade-safety.result == 'skipped') &&
+      (needs.deploy-mainnet.result == 'success' ||
+       (needs.deploy-mainnet.result == 'skipped' && true)) &&
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main'
+    uses: BreadchainCoop/etherform/.github/workflows/_foundry-post-mainnet.yml@implement-cicd-spec
+    with:
+      flatten-contracts: true
+      create-release: ${{ true && needs.deploy-mainnet.result == 'success' }}
+      release-prefix: ""
+      upgrades-path: test/upgrades
+      network-name: Sepolia
+      blockscout-url: https://eth-sepolia.blockscout.com
+      working-directory: .
     secrets: inherit
